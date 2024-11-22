@@ -16,7 +16,6 @@ import java.util.List;
 @Entity
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
 public class Account implements UserDetails {
 
     @Id

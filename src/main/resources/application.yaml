@@ -1,1 +1,39 @@
-spring.application.name=IT_One_AuthenticationService
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/it_one_hackathon?useSSL=false&amp;serverTimezone=UTC
+    username: postgres
+    password: admin123
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: public
+
+logging:
+  level:
+    org:
+      springframework:
+        web:
+          FilterChainProxy: DEBUG
+          csrf:
+            CsrfFilter: DEBUG
+        security: DEBUG
+    root: info
+
+log4j:
+  logger:
+    org:
+      springframework:
+        security: DEBUG
+
+server:
+  port: 8090
