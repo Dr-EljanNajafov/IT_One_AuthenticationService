@@ -74,4 +74,25 @@ public class AccountController {
             return response;
         });
     }
+
+    @Operation(summary = "Выход из аккаунта")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request) {
+
+        String token = jwtService.extractToken(request).orElseThrow(() -> new RuntimeException("Token not found"));
+
+        // Проверяем валидность токена
+        if (!jwtService.isTokenValid(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        }
+
+        // Получаем дату истечения срока действия токена
+        Date expiration = jwtService.extractClaim(token, Claims::getExpiration);
+
+        blacklistService.addToBlacklist(token, expiration);
+
+
+        return ResponseEntity.ok("Logged out successfully");
+    }
 }

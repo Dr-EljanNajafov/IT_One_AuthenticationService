@@ -1,5 +1,6 @@
 package com.itone.it_one_authenticationservice.auth;
 
+import com.itone.it_one_authenticationservice.service.BlacklistService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -20,7 +21,7 @@ import java.util.function.Function;
 public class JwtService {
 
     private static final String SECRET_KEY = "f2f8896cf49a08be69cef838de3b51d38ddeb7fadcf9e0e30f7181a9c2394d9d20a04d9257ebbcc696181154900280cbb3adcc68dbccf167903f9f78e36acfe8";
-
+    private final BlacklistService blacklistService;
     public <T> T accessUser(HttpServletRequest request, Function<String, T> userConsumer) {
         String username = extractClaim(extractToken(request).orElseThrow(), Claims::getSubject);
         return userConsumer.apply(username);
@@ -92,6 +93,18 @@ public class JwtService {
             return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    public boolean isTokenValid(String token) {
+        if (blacklistService.isTokenBlacklisted(token)) {
+            return false;  // Token is blacklisted
+        }
+        try {
+            String username = extractUsername(token);
+            return username != null && !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;  // Invalid token
         }
     }
 
