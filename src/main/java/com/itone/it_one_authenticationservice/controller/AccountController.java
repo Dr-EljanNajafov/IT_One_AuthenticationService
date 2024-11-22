@@ -7,6 +7,7 @@ import com.itone.it_one_authenticationservice.entity.register.RegisterRequest;
 import com.itone.it_one_authenticationservice.entity.register.UpdateRequest;
 import com.itone.it_one_authenticationservice.entity.response.AuthenticationResponse;
 import com.itone.it_one_authenticationservice.service.AccountService;
+import com.itone.it_one_authenticationservice.service.BlacklistService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,6 +17,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.jsonwebtoken.Claims;
+
+import java.util.Date;
 import java.util.Optional;
 
 @RestController
@@ -24,6 +28,7 @@ import java.util.Optional;
 public class AccountController {
     private final AccountService accountService;
     private final JwtService jwtService;
+    private final BlacklistService blacklistService;
     private static final Logger logger = LoggerFactory.getLogger(AccountController.class);
 
     @Operation(summary = "Получение данных о текущем аккаунте")
@@ -50,10 +55,20 @@ public class AccountController {
     @SecurityRequirement(name = "Bearer Authentication")
     @PutMapping("/Update")
     public AuthenticationResponse update(HttpServletRequest request, @RequestBody UpdateRequest updateRequest) {
+
         // Получаем имя пользователя из текущего токена
         return jwtService.accessUser(request, username -> {
             // Обновляем аккаунт и получаем ответ
             AuthenticationResponse response = accountService.update(username, updateRequest);
+
+            // Извлекаем текущий токен из запроса
+            String token = jwtService.extractToken(request).orElseThrow(() -> new RuntimeException("Token not found"));
+
+            // Получаем дату истечения срока действия токена
+            Date expiration = jwtService.extractClaim(token, Claims::getExpiration);
+
+            // Добавляем токен в блэклист
+            blacklistService.addToBlacklist(token, expiration);
 
             // Возвращаем новый токен
             return response;

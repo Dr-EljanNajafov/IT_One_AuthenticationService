@@ -81,6 +81,7 @@ public class JwtService {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 10000 * 60 * 24))
+                .setId(UUID.randomUUID().toString()) // Уникальный идентификатор токена
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
